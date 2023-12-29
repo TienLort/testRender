@@ -3,7 +3,13 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import storage
 
-cred = credentials.Certificate("../db/credential.json")
+import os
+
+# Change the working directory to the directory of your script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+cred = credentials.Certificate("./credential.json")
 firebase_admin.initialize_app(cred, {
     'storageBucket': 'capstoneproject-ca420.appspot.com'
 })
