@@ -1,21 +1,25 @@
 import os
 import re
-import json
-import uuid
 import time
 import difflib
 from anyio import Path
 from openai import OpenAI
 import app.db.firebase_storage as storage
+from dotenv import load_dotenv
 
+# Initiate the path of our current directory using 'pathlib' module
+load_dotenv()
+KEY = os.getenv("OPENAI_API_KEY")
+# Load the environment variables containing in the .env file
+# load_dotenv(os.path.join(basedir, '.env'))
 class OpenAIService():
 
     def __init__(self):
 
-        self.client = OpenAI(api_key="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")
+        self.client = OpenAI(api_key=KEY)
 
         # Define the directory where we want to save audio request files
-        self.AUDIO_DIRECTORY = "./local/audios/"
+        self.AUDIO_DIRECTORY = "../../local/audios"
 
         # Define the audio file extension
         self.AUDIO_FILE_EXTENSION = '.mp3'
@@ -62,7 +66,6 @@ class OpenAIService():
             print(str(error))
 
         print(full_path)
-        # https://github.com/tiangolo/fastapi/discussions/6284
 
         # Upload audio
         try:
@@ -75,13 +78,15 @@ class OpenAIService():
     def transcribe(self, file):
         
         transcript = ""
-         
+        
         # Create a directory for files
         if not os.path.exists(self.AUDIO_DIRECTORY):
             os.makedirs(self.AUDIO_DIRECTORY)
 
+        timestamp = int(time.time()) 
+        audio_name = f"speech_{timestamp}"
         # Combine the directory, filename, timestamp, and extension to create the full path
-        full_path = os.path.join(self.AUDIO_DIRECTORY, self.AUDIO_FILE_EXTENSION)
+        full_path = os.path.join(self.AUDIO_DIRECTORY, audio_name + self.AUDIO_FILE_EXTENSION)
 
         # Save audio file to disk temporarily
         try:
@@ -92,10 +97,17 @@ class OpenAIService():
             return "There was an error uploading the file"
         finally:
             file.file.close()
+
+        # Save the audio file information to the storage
+        try:
+            storage.upload_audio(full_path)
+        except Exception as error:
+            print(str(error))
         
         # Transcribe audio using OpenAI API
         with open(full_path, 'rb') as f:
             transcript = self.client.audio.transcriptions.create(model="whisper-1", file=f, language="en", temperature=0.7)
+        
 
         return str(transcript.text).lower(), full_path
     

@@ -8,7 +8,6 @@ import os
 # Change the working directory to the directory of your script
 script_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_dir)
-
 cred = credentials.Certificate("./credential.json")
 firebase_admin.initialize_app(cred, {
     'storageBucket': 'capstoneproject-ca420.appspot.com'
@@ -21,7 +20,10 @@ def download_audio(download_url, audio_name):
         f.write(response.content)
 
 def upload_audio(audio_name):
-    bucket = storage.bucket()
     upload_path = f"/load/audios/{audio_name}"
+    bucket = storage.bucket()
+    print(audio_name)
+    print(upload_path)
     blob = bucket.blob(upload_path)
-    blob.upload_from_filename("images/mountains.mp4")
+    print(blob)
+    blob.upload_from_filename(audio_name)
